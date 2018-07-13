@@ -129,10 +129,28 @@ class PdfJinja(object):
         return bool(data)
 
     def paste(self, data):
-        rect = self.context["rect"]
+        rect = self.context["rect"] 
         x, y = rect[0], rect[1]
         w, h = rect[2] - x, rect[3] - y
-        pdf = self.Attachment(data, dimensions=(x, y, w, h)).pdf()
+        # Changed to accomodate StringIO
+        img = Image.open(imageData)
+        imgW, imgH = img.size
+        imageRatio = float(imgH)/float(imgW)
+        pdfFieldRatio = float(h)/float(w)
+        centerX = x
+        centerY = y
+        if imageRatio > pdfFieldRatio: 
+            resizeImgW = imgW * (h/imgH)               
+            resizeImgH = h         
+            marginW = (w - resizeImgW)/2.0
+            centerX = x + marginW
+        elif imageRatio < pdfFieldRatio:
+            resizeImgH = imgH * (w/imgW)         
+            resizeImgW = w
+            marginH = (h - resizeImgH)/2.0
+            centerY = y + marginH     
+        
+        pdf = self.Attachment(imageData, dimensions=(centerX, centerY, resizeImgW, resizeImgH)).pdf()
         self.watermarks.append((self.context["page"], pdf))
         return " "
 
